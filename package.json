@@ -1,0 +1,48 @@
+{
+  "name": "cdp-override",
+  "version": "0.1.0",
+  "description": "Replace requests on a live site with custom responses, or with content from your local server, via the Chrome DevTools Protocol.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "override": "src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "chrome",
+    "devtools-protocol",
+    "cdp",
+    "intercept",
+    "override",
+    "mock",
+    "replace",
+    "fetch"
+  ],
+  "author": "Eugene Broyde",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/broyde/cdp-override.git"
+  },
+  "bugs": {
+    "url": "https://github.com/broyde/cdp-override/issues"
+  },
+  "homepage": "https://github.com/broyde/cdp-override#readme",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.5.0",
+    "prettier": "^3.8.3"
+  }
+}
