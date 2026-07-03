@@ -2,7 +2,7 @@
 import {resolve as resolvePath, dirname, basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {watch} from 'node:fs';
-import {launch} from './chrome.js';
+import {launch, attach} from './chrome.js';
 import {connect} from './cdp.js';
 import {start} from './intercept.js';
 
@@ -44,13 +44,15 @@ watch(dirname(abs), (_, filename) => {
   timer = setTimeout(load, 50);
 });
 
-const {child, wsUrl} = await launch();
+const endpoint = process.env.CDP_ENDPOINT;
+const {child, wsUrl} = endpoint ? await attach(endpoint) : await launch();
 const cdp = await connect(wsUrl);
 await start(cdp, mod);
 
 const shutdown = () => {
+  // Only kill Chrome instances we launched ourselves; never kill a remote/attached browser.
   try {
-    child.kill();
+    child?.kill();
   } catch {
     /* empty */
   }
@@ -58,6 +60,10 @@ const shutdown = () => {
 };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-child.on('exit', () => process.exit(0));
+child?.on('exit', () => process.exit(0));
 
-console.log('Running. Use the Chrome window; Ctrl-C to quit.');
+console.log(
+  endpoint
+    ? `Running against ${endpoint}. Browse on the device; Ctrl-C to quit.`
+    : 'Running. Use the Chrome window; Ctrl-C to quit.',
+);

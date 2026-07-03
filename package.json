@@ -1,6 +1,6 @@
 {
   "name": "cdp-override",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Replace requests on a live site with custom responses, or with content from your local server, via the Chrome DevTools Protocol.",
   "type": "module",
   "engines": {

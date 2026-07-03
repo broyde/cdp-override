@@ -114,12 +114,35 @@ For replaced **JS** and **CSS** responses, the tool automatically:
 
 This sidesteps the fact that DevTools fetches source maps via its own internal fetcher that doesn't go through CDP `Fetch.enable`.
 
+## Remote device (Android Chrome over USB)
+
+Instead of launching a local Chrome, you can attach to Chrome running on a USB-connected Android phone. Interception still happens server-side on your laptop — Node fetches the replacement bytes and pushes them to the phone over the debugging socket — so **the phone never needs to reach your local dev server**. `resolve()` mapping to `127.0.0.1` keeps working (it resolves on the laptop, where Node runs).
+
+1. On the phone: enable **Developer options → USB debugging**, connect via USB, open Chrome, and accept the debugging prompt.
+2. Forward the phone's DevTools socket to a local port ([adb](https://developer.android.com/tools/adb) required):
+
+   ```
+   adb forward tcp:9222 localabstract:chrome_devtools_remote
+   ```
+
+   Verify it works: `curl http://localhost:9222/json/version` should return JSON.
+3. Point the tool at that endpoint instead of launching a browser:
+
+   ```
+   CDP_ENDPOINT=http://localhost:9222 npx cdp-override replace.js
+   ```
+
+Browse on the phone; matching requests are served from your laptop. The attached browser is never launched or killed by the tool. The same approach works for any already-running Chrome started with `--remote-debugging-port` (another machine, a headless instance, etc.) — just point `CDP_ENDPOINT` at its `/json/version` host.
+
+When done, remove the forward with `adb forward --remove tcp:9222` — it holds `localhost:9222` bound on your laptop, so clear it if something else needs that port (e.g. a desktop Chrome on `--remote-debugging-port=9222`).
+
 ## Configuration
 
 | Env var | Default | Purpose |
 | --- | --- | --- |
-| `CHROME_PATH` | (auto-discover) | Chrome/Chromium binary path. Falls back to `google-chrome`, `google-chrome-stable`, `chromium`, `chromium-browser`, `chrome` on PATH. |
-| `REPLACER_PROFILE_DIR` | `~/.cache/replacer-profile` | Chrome profile directory. **Persistent** — your tabs, history, extensions, and cookies survive between runs. |
+| `CDP_ENDPOINT` | (unset) | Attach to an already-running Chrome at this HTTP debugging endpoint (e.g. `http://localhost:9222`) instead of launching one. See [Remote device](#remote-device-android-chrome-over-usb). |
+| `CHROME_PATH` | (auto-discover) | Chrome/Chromium binary path. Falls back to `google-chrome`, `google-chrome-stable`, `chromium`, `chromium-browser`, `chrome` on PATH. Ignored when `CDP_ENDPOINT` is set. |
+| `REPLACER_PROFILE_DIR` | `~/.cache/replacer-profile` | Chrome profile directory. **Persistent** — your tabs, history, extensions, and cookies survive between runs. Ignored when `CDP_ENDPOINT` is set. |
 
 The profile is fully isolated from your default Chrome (`~/.config/google-chrome` is never touched). To wipe it, delete the directory.
 

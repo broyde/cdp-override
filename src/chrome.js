@@ -67,3 +67,19 @@ export async function launch() {
   const {webSocketDebuggerUrl} = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
   return {child, wsUrl: webSocketDebuggerUrl};
 }
+
+// Attach to an already-running Chrome (e.g. an Android device reached via
+// `adb forward tcp:9222 localabstract:chrome_devtools_remote`). No browser is
+// launched or killed; we only borrow its debugging endpoint.
+export async function attach(endpoint) {
+  const base = new URL(endpoint);
+  const {webSocketDebuggerUrl} = await (await fetch(new URL('/json/version', base))).json();
+  if (!webSocketDebuggerUrl) {
+    throw new Error(`No webSocketDebuggerUrl at ${base.href} — is Chrome running and the port forwarded?`);
+  }
+  // The device may report a ws host that isn't reachable from here (e.g. its
+  // own localhost). Force it through the endpoint we can actually reach.
+  const ws = new URL(webSocketDebuggerUrl);
+  ws.host = base.host;
+  return {child: null, wsUrl: ws.toString()};
+}
